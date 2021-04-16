@@ -1,0 +1,105 @@
+#include <omp.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <string.h>
+#include <chrono>
+#include <ctime>
+
+#define N 4 //array size
+
+using namespace std;
+
+int main(int argc, char* argv[]) 
+{
+    double start;
+    double end;
+    double startPar;
+    std::time_t epoch_time = std::chrono::system_clock::to_time_t(p0);
+    std::time_t today_time = std::chrono::system_clock::to_time_t(p1);
+    std::cout << "timestamp (epoch): " << std::ctime(&today_time);
+ 
+    std::cout << "hours since epoch: "
+              << std::chrono::duration_cast<std::chrono::hours>(
+                   p1.time_since_epoch()).count() <<endl;
+    //cout << "test";
+    start = omp_get_wtime();
+    if (argc != 4)
+    {
+        cout << "Error";
+        cout << endl;
+        return 1;
+    }
+    int numThreads = atoi(argv[3]);
+    omp_set_num_threads(numThreads);//set number of threads here
+    // int i, j, k;
+    string fileA = argv[1];
+    string fileB = argv[2];
+    
+    int dim = N;
+    int temp;
+    
+    
+    
+    std::ifstream f(fileA.c_str());
+    std::ifstream f2(fileB.c_str());
+    if (!f.is_open()) return -1;
+
+
+    f >> dim;
+    //cout << "Look at f dim:";
+    //cout << temp;
+    //cout << endl;
+    
+    int A[dim][dim], B[dim][dim], C[dim][dim];
+    for (int i=0; i < dim; ++i) 
+    {
+        for (int j=0; j < dim; ++j) 
+        {
+            f >> A[i][j];
+        }
+    }
+
+    if (!f2.is_open()) return -1;
+
+    f2 >> temp;
+    for (int i=0; i < dim; ++i)
+    {
+        for (int j=0; j < dim; ++j)
+        {
+            f2 >> B[i][j];
+        }
+    }
+    //cout << "Look here:";
+    //cout << dim;
+    //cout << endl;
+    startPar = omp_get_wtime(); //start time measurement
+#pragma omp parallel for num_threads(numThreads)
+    for (int i = 0; i < dim; i++) {
+        for (int j = 0; j < dim; j++) {
+            C[i][j] = 0;
+            for (int k = 0; k < dim; k++) {
+                C[i][j] += A[i][k] * B[k][j];
+                //cout << "Info: "<< i << " " << j << " " << k << " " << omp_get_thread_num(); //thread ID; which thread is performing action
+                // cout << "Retrieved using thread num: " <<  << " "omp_get_thread_num() ;
+                //cout << endl;
+            }
+        }
+    }
+    endPar = omp_get_wtime(); //end time measurement
+   // for (int x = 0; x < dim; x++)  // loop 3 times for three lines
+   // {
+     //   for (int y = 0; y < dim; y++)  // loop for the three elements on the line
+      //  {
+       //     cout << C[x][y] << " ";  // display the current element out of the array
+       // }
+      //  cout << endl;  // when the inner loop is done, go to a new line
+   // }
+    end = omp_get_wtime(); 
+    
+    cout << "progname: " << argv[0] << " " << "nrows: " << dim << " " << "ncols: " << dim << " " << "nthreads: " << numThreads << " " << "wallTime: " << end - start << " " << "parallelTime: " << endPar - startPar <<endl;
+    
+    return(0);
+}
